@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CaseType {
+  FAMILY
+  BUSINESS
+  CRIMINAL
+}
+
+enum CaseStatus {
+  REGISTERED
+  AWAITING_RESPONSE
+  ACCEPTED
+  PANEL_CREATED
+  MEDIATION_IN_PROGRESS
+  RESOLVED
+  UNRESOLVED
+}
+
+enum FileType {
+  IMAGE
+  VIDEO
+  AUDIO
+}
+
+enum PanelRole {
+  LAWYER
+  RELIGIOUS_SCHOLAR
+  REPUTABLE_MEMBER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  age       Int
+  gender    String
+  address   String
+  password  String
+  email     String   @unique
+  phone     String
+  photo     String
+  cases     Case[]   @relation("FiledCases")
+  createdAt DateTime @default(now())
+}
+
+model Case {
+  id                   String        @id @default(cuid())
+  caseType             CaseType
+  issueDescription     String
+  oppositePartyName    String
+  oppositePartyEmail   String
+  oppositePartyPhone   String
+  oppositePartyAddress String
+  isInCourt            Boolean
+  firOrCaseNumber      String?
+  courtOrStationName   String?
+  status               CaseStatus    @default(REGISTERED)
+  filedBy              User          @relation("FiledCases", fields: [filedById], references: [id])
+  filedById            String
+  evidence             Evidence[]
+  panelMembers         PanelMember[]
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+}
+
+model Evidence {
+  id         String   @id @default(cuid())
+  case       Case     @relation(fields: [caseId], references: [id])
+  caseId     String
+  type       FileType
+  fileUrl    String
+  uploadedAt DateTime @default(now())
+}
+
+model PanelMember {
+  id     String    @id @default(cuid())
+  name   String
+  role   PanelRole
+  case   Case      @relation(fields: [caseId], references: [id])
+  caseId String
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
